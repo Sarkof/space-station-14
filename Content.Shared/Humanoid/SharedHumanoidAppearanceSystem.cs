@@ -13,6 +13,7 @@ using Robust.Shared;
 using Robust.Shared.Configuration;
 using Robust.Shared.GameObjects.Components.Localization;
 using Robust.Shared.Network;
+using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.Manager;
@@ -40,7 +41,8 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
     [Dependency] private readonly MarkingManager _markingManager = default!;
     [Dependency] private readonly GrammarSystem _grammarSystem = default!;
     [Dependency] private readonly SharedIdentitySystem _identity = default!;
-
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
+	
     [ValidatePrototypeId<SpeciesPrototype>]
     public const string DefaultSpecies = "Human";
 
@@ -113,6 +115,12 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
         var age = GetAgeRepresentation(component.Species, component.Age);
 
         args.PushText(Loc.GetString("humanoid-appearance-component-examine", ("user", identity), ("age", age), ("species", species)));
+		
+        var examinerPos = _transform.GetWorldPosition(args.Examiner);
+        var targetPos = _transform.GetWorldPosition(args.Examined);
+        var distance = (targetPos - examinerPos).Length();
+
+        args.PushMarkup(Loc.GetString("examine-distance", ("distance", distance.ToString("F1"))));
     }
 
     /// <summary>
