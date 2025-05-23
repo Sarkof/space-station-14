@@ -1,4 +1,5 @@
 using Robust.Shared.Prototypes;
+using System.Numerics;
 
 namespace Content.Shared.Body.Prototypes;
 
@@ -26,4 +27,4 @@ public sealed partial class BodyPrototype : IPrototype
 }
 
 [DataRecord]
-public sealed partial record BodyPrototypeSlot(EntProtoId? Part, HashSet<string> Connections, Dictionary<string, string> Organs);
+public sealed partial record BodyPrototypeSlot(EntProtoId? Part, HashSet<string> Connections, Dictionary<string, string> Organs, Vector2 Offset);

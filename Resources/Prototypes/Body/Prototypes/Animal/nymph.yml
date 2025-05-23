@@ -5,6 +5,7 @@
   slots:
     torso:
       part: TorsoAnimal
+  offset: "0,0"
       connections:
       - legs
       organs:
@@ -16,10 +17,12 @@
         kidneys: OrganAnimalKidneys
     legs:
       part: LegsAnimal
+  offset: "0,0"
       connections:
       - feet
     feet:
       part: FeetAnimal
+  offset: "0,0"
 
 - type: body
   id: AnimalNymphLungs
@@ -28,6 +31,7 @@
   slots:
     torso:
       part: TorsoAnimal
+  offset: "0,0"
       connections:
       - legs
       organs:
@@ -38,10 +42,12 @@
         kidneys: OrganAnimalKidneys
     legs:
       part: LegsAnimal
+  offset: "0,0"
       connections:
       - feet
     feet:
       part: FeetAnimal
+  offset: "0,0"
 
 - type: body
   id: AnimalNymphStomach
@@ -50,6 +56,7 @@
   slots:
     torso:
       part: TorsoAnimal
+  offset: "0,0"
       connections:
       - legs
       organs:
@@ -60,7 +67,9 @@
         kidneys: OrganAnimalKidneys
     legs:
       part: LegsAnimal
+  offset: "0,0"
       connections:
       - feet
     feet:
       part: FeetAnimal
+  offset: "0,0"

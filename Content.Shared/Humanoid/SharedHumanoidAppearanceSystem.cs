@@ -115,6 +115,12 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
         var age = GetAgeRepresentation(component.Species, component.Age);
 
         args.PushText(Loc.GetString("humanoid-appearance-component-examine", ("user", identity), ("age", age), ("species", species)));
+
+        if (args.TargetPart != null)
+        {
+            var partName = Identity.Name(args.TargetPart.Value, EntityManager);
+            args.PushMarkup(Loc.GetString("examined-limb", ("part", partName)));
+        }
 		
         var examinerPos = _transform.GetWorldPosition(args.Examiner);
         var targetPos = _transform.GetWorldPosition(args.Examined);

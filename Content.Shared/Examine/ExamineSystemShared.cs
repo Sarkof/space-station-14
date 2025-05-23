@@ -253,7 +253,7 @@ namespace Content.Shared.Examine
             return InRangeUnOccluded(originPos, other, range, predicate, ignoreInsideBlocker);
         }
 
-        public FormattedMessage GetExamineText(EntityUid entity, EntityUid? examiner)
+        public FormattedMessage GetExamineText(EntityUid entity, EntityUid? examiner, EntityUid? targetPart = null)
         {
             var message = new FormattedMessage();
 
@@ -276,7 +276,7 @@ namespace Content.Shared.Examine
 
             // Raise the event and let things that subscribe to it change the message...
             var isInDetailsRange = IsInDetailsRange(examiner.Value, entity);
-            var examinedEvent = new ExaminedEvent(message, entity, examiner.Value, isInDetailsRange, hasDescription);
+            var examinedEvent = new ExaminedEvent(message, entity, examiner.Value, isInDetailsRange, hasDescription, targetPart);
             RaiseLocalEvent(entity, examinedEvent);
 
             var newMessage = examinedEvent.GetTotalMessage();
@@ -332,13 +332,19 @@ namespace Content.Shared.Examine
 
         private ExamineMessagePart? _currentGroupPart;
 
-        public ExaminedEvent(FormattedMessage message, EntityUid examined, EntityUid examiner, bool isInDetailsRange, bool hasDescription)
+        /// <summary>
+        ///     Целевая конечность, на которую навёл курсор экзаменующий.
+        /// </summary>
+        public EntityUid? TargetPart { get; }
+
+        public ExaminedEvent(FormattedMessage message, EntityUid examined, EntityUid examiner, bool isInDetailsRange, bool hasDescription, EntityUid? targetPart)
         {
             Message = message;
             Examined = examined;
             Examiner = examiner;
             IsInDetailsRange = isInDetailsRange;
             _hasDescription = hasDescription;
+            TargetPart = targetPart;
         }
 
         /// <summary>

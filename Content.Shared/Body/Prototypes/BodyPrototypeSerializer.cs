@@ -8,6 +8,7 @@ using Robust.Shared.Serialization.Markdown.Mapping;
 using Robust.Shared.Serialization.Markdown.Sequence;
 using Robust.Shared.Serialization.Markdown.Validation;
 using Robust.Shared.Serialization.Markdown.Value;
+using System.Numerics;
 using Robust.Shared.Serialization.TypeSerializers.Interfaces;
 
 namespace Content.Shared.Body.Prototypes;
@@ -114,7 +115,7 @@ public sealed class BodyPrototypeSerializer : ITypeReader<BodyPrototype, Mapping
         var name = node.Get<ValueDataNode>("name").Value;
         var root = node.Get<ValueDataNode>("root").Value;
         var slotNodes = node.Get<MappingDataNode>("slots");
-        var allConnections = new Dictionary<string, (string? Part, HashSet<string>? Connections, Dictionary<string, string>? Organs)>();
+        var allConnections = new Dictionary<string, (string? Part, HashSet<string>? Connections, Dictionary<string, string>? Organs, Vector2 Offset)>();
 
         foreach (var (slotId, valueNode) in slotNodes)
         {
@@ -138,6 +139,7 @@ public sealed class BodyPrototypeSerializer : ITypeReader<BodyPrototype, Mapping
             }
 
             Dictionary<string, string>? organs = null;
+            Vector2 offset = Vector2.Zero;
             if (slot.TryGet("organs", out MappingDataNode? slotOrgansNode))
             {
                 organs = new Dictionary<string, string>();
@@ -148,10 +150,17 @@ public sealed class BodyPrototypeSerializer : ITypeReader<BodyPrototype, Mapping
                 }
             }
 
-            allConnections.Add(slotId, (part, connections, organs));
+            if (slot.TryGet("offset", out ValueDataNode? offsetNode))
+            {
+                var split = offsetNode.Value.Split(',');
+                if (split.Length == 2 && float.TryParse(split[0], out var x) && float.TryParse(split[1], out var y))
+                    offset = new Vector2(x, y);
+            }
+
+            allConnections.Add(slotId, (part, connections, organs, offset));
         }
 
-        foreach (var (slotId, (_, connections, _)) in allConnections)
+        foreach (var (slotId, (_, connections, _, _)) in allConnections)
         {
             if (connections == null)
                 continue;
@@ -167,9 +176,9 @@ public sealed class BodyPrototypeSerializer : ITypeReader<BodyPrototype, Mapping
 
         var slots = new Dictionary<string, BodyPrototypeSlot>();
 
-        foreach (var (slotId, (part, connections, organs)) in allConnections)
+        foreach (var (slotId, (part, connections, organs, offset)) in allConnections)
         {
-            var slot = new BodyPrototypeSlot(part, connections ?? new HashSet<string>(), organs ?? new Dictionary<string, string>());
+            var slot = new BodyPrototypeSlot(part, connections ?? new HashSet<string>(), organs ?? new Dictionary<string, string>(), offset);
             slots.Add(slotId, slot);
         }
 
