@@ -5,18 +5,23 @@
   slots:
     torso:
       part: TorsoHuman
+  offset: "0,0"
       connections:
       - right_arm
       - left_arm
     right_arm:
       part: RightArmHuman
+  offset: "0,0"
       connections:
       - right_hand
     left_arm:
       part: LeftArmHuman
+  offset: "0,0"
       connections:
       - left_hand
     right_hand:
       part: RightHandHuman
+  offset: "0,0"
     left_hand:
       part: LeftHandHuman
+  offset: "0,0"

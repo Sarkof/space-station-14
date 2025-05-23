@@ -5,12 +5,14 @@
   slots:
     head:
       part: HeadDiona
+  offset: "0,0"
       connections:
       - torso
       organs:
         brain: OrganDionaBrainNymph
     torso:
       part: TorsoDiona
+  offset: "0,0"
       connections:
       - right arm
       - left arm
@@ -21,25 +23,33 @@
         lungs: OrganDionaLungsNymph
     right arm:
       part: RightArmDiona
+  offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmDiona
+  offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandDiona
+  offset: "0,0"
     left hand:
       part: LeftHandDiona
+  offset: "0,0"
     right leg:
       part: RightLegDiona
+  offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegDiona
+  offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootDiona
+  offset: "0,0"
     left foot:
       part: LeftFootDiona
+  offset: "0,0"

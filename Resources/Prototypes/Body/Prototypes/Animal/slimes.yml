@@ -5,6 +5,7 @@
   slots:
     torso:
       part: TorsoSlime
+  offset: "0,0"
       connections:
       - legs
       organs:
@@ -12,7 +13,9 @@
         lungs: OrganSlimesLungs
     legs:
       part: LegsAnimal
+  offset: "0,0"
       connections:
       - feet
     feet:
       part: FeetAnimal
+  offset: "0,0"
