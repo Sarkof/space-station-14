@@ -5,10 +5,12 @@
   slots:
     head:
       part: HeadSlime
+      offset: "0,0"
       connections:
       - torso
     torso:
       part: TorsoSlime
+      offset: "0,0"
       connections:
       - right arm
       - left arm
@@ -19,25 +21,33 @@
         lungs: OrganSlimeLungs
     right arm:
       part: RightArmSlime
+      offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmSlime
+      offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandSlime
+      offset: "0,0"
     left hand:
       part: LeftHandSlime
+      offset: "0,0"
     right leg:
       part: RightLegSlime
+      offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegSlime
+      offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootSlime
+      offset: "0,0"
     left foot:
       part: LeftFootSlime
+      offset: "0,0"

@@ -11,9 +11,13 @@ using Content.Shared.Verbs;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
+using Robust.Shared.Maths;
+using Content.Shared.Body.Part;
+using Robust.Client.Input;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
+using Robust.Shared.GameObjects;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Utility;
@@ -29,6 +33,8 @@ namespace Content.Client.Examine
         [Dependency] private readonly IUserInterfaceManager _userInterfaceManager = default!;
         [Dependency] private readonly IPlayerManager _playerManager = default!;
         [Dependency] private readonly IEyeManager _eyeManager = default!;
+        [Dependency] private readonly IInputManager _inputManager = default!;
+        [Dependency] private readonly EntityLookupSystem _lookup = default!;
         [Dependency] private readonly VerbSystem _verbSystem = default!;
         [Dependency] private readonly SpriteSystem _sprite = default!;
 
@@ -41,6 +47,20 @@ namespace Content.Client.Examine
         private ScreenCoordinates _popupPos;
         private CancellationTokenSource? _requestCancelTokenSource;
         private int _idCounter;
+
+        private EntityUid? GetPartUnderCursor(EntityUid body)
+        {
+            var mousePos = _eyeManager.PixelToMap(_inputManager.MouseScreenPosition).Position;
+            var bounds = new Box2(mousePos - new Vector2(0.05f, 0.05f), mousePos + new Vector2(0.05f, 0.05f));
+            var ents = _lookup.GetEntitiesIntersecting(_eyeManager.CurrentEye.Position.MapId, bounds);
+            foreach (var ent in ents)
+            {
+                if (TryComp<BodyPartComponent>(ent, out var part) && part.Body == body)
+                    return ent;
+            }
+
+            return null;
+        }
 
         public override void Initialize()
         {
@@ -409,7 +429,8 @@ namespace Content.Client.Examine
             // Always update tooltip info from client first.
             // If we get it wrong, server will correct us later anyway.
             // This will usually be correct (barring server-only components, which generally only adds, not replaces text)
-            message = GetExamineText(entity, playerEnt);
+            var targeted = GetPartUnderCursor(entity);
+            message = GetExamineText(entity, playerEnt, targeted);
             UpdateTooltipInfo(playerEnt.Value, entity, message);
 
             if (!IsClientSide(entity))
@@ -419,7 +440,7 @@ namespace Content.Client.Examine
                 {
                     _idCounter += 1;
                 }
-                RaiseNetworkEvent(new ExamineSystemMessages.RequestExamineInfoMessage(GetNetEntity(entity), _idCounter, true));
+                RaiseNetworkEvent(new ExamineSystemMessages.RequestExamineInfoMessage(GetNetEntity(entity), _idCounter, true, targeted.HasValue ? GetNetEntity(targeted.Value) : (NetEntity?) null));
             }
 
             RaiseLocalEvent(entity, new ClientExaminedEvent(entity, playerEnt.Value));

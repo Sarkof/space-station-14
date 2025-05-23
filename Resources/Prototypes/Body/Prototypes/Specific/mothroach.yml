@@ -5,6 +5,7 @@
   slots:
     torso:
       part: TorsoAnimal
+      offset: "0,0"
       organs:
         lungs: OrganAnimalLungs
         stomach: OrganMothStomach

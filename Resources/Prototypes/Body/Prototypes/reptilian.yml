@@ -5,6 +5,7 @@
   slots:
     head:
       part: HeadReptilian
+      offset: "0,0"
       connections:
       - torso
       organs:
@@ -12,6 +13,7 @@
         eyes: OrganHumanEyes
     torso:
       part: TorsoReptilian
+      offset: "0,0"
       organs:
         heart: OrganAnimalHeart
         lungs: OrganHumanLungs
@@ -25,25 +27,33 @@
       - left leg
     right arm:
       part: RightArmReptilian
+      offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmReptilian
+      offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandReptilian
+      offset: "0,0"
     left hand:
       part: LeftHandReptilian
+      offset: "0,0"
     right leg:
       part: RightLegReptilian
+      offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegReptilian
+      offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootReptilian
+      offset: "0,0"
     left foot:
       part: LeftFootReptilian
+      offset: "0,0"

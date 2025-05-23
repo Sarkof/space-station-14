@@ -5,6 +5,7 @@
   slots:
     torso:
       part: TorsoAnimal
+      offset: "0,0"
       connections:
       - hands
       - legs
@@ -16,9 +17,12 @@
         kidneys: OrganAnimalKidneys
     hands:
       part: HandsAnimal
+      offset: "0,0"
     legs:
       part: LegsAnimal
+      offset: "0,0"
       connections:
       - feet
     feet:
       part: FeetAnimal
+      offset: "0,0"

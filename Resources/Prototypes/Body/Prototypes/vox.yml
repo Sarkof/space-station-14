@@ -5,6 +5,7 @@
   slots:
     head:
       part: HeadVox
+      offset: "0,0"
       connections:
       - torso
       organs:
@@ -12,6 +13,7 @@
         eyes: OrganHumanEyes
     torso:
       part: TorsoVox
+      offset: "0,0"
       connections:
       - right arm
       - left arm
@@ -25,25 +27,33 @@
         kidneys: OrganHumanKidneys
     right arm:
       part: RightArmVox
+      offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmVox
+      offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandVox
+      offset: "0,0"
     left hand:
       part: LeftHandVox
+      offset: "0,0"
     right leg:
       part: RightLegVox
+      offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegVox
+      offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootVox
+      offset: "0,0"
     left foot:
       part: LeftFootVox
+      offset: "0,0"

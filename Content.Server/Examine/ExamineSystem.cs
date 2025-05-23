@@ -69,7 +69,11 @@ namespace Content.Server.Examine
             if (request.GetVerbs)
                 verbs = _verbSystem.GetLocalVerbs(entity, playerEnt, typeof(ExamineVerb));
 
-            var text = GetExamineText(entity, player.AttachedEntity);
+            EntityUid? targetPart = null;
+            if (request.TargetPart.HasValue)
+                targetPart = GetEntity(request.TargetPart.Value);
+
+            var text = GetExamineText(entity, player.AttachedEntity, targetPart);
             RaiseNetworkEvent(new ExamineSystemMessages.ExamineInfoResponseMessage(
                 request.NetEntity, request.Id, text, verbs?.ToList()), channel);
         }

@@ -5,10 +5,12 @@
   slots:
     head:
       part: HeadSkeleton
+      offset: "0,0"
       connections:
       - torso
     torso:
       part: TorsoSkeleton
+      offset: "0,0"
       connections:
       - right arm
       - left arm
@@ -16,25 +18,33 @@
       - left leg
     right arm:
       part: RightArmSkeleton
+      offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmSkeleton
+      offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandSkeleton
+      offset: "0,0"
     left hand:
       part: LeftHandSkeleton
+      offset: "0,0"
     right leg:
       part: RightLegSkeleton
+      offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegSkeleton
+      offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootSkeleton
+      offset: "0,0"
     left foot:
       part: LeftFootSkeleton
+      offset: "0,0"

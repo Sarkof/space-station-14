@@ -1,6 +1,7 @@
 using Content.Shared.Verbs;
 using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
+using Robust.Shared.Network;
 
 namespace Content.Shared.Examine
 {
@@ -14,12 +15,14 @@ namespace Content.Shared.Examine
             public readonly int Id;
 
             public readonly bool GetVerbs;
+            public readonly NetEntity? TargetPart;
 
-            public RequestExamineInfoMessage(NetEntity netEntity, int id, bool getVerbs=false)
+            public RequestExamineInfoMessage(NetEntity netEntity, int id, bool getVerbs=false, NetEntity? targetPart = null)
             {
                 NetEntity = netEntity;
                 Id = id;
                 GetVerbs = getVerbs;
+                TargetPart = targetPart;
             }
         }
 

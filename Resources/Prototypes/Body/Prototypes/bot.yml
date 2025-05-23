@@ -5,3 +5,4 @@
   slots:
     hand 1:
       part: LeftArmBorg
+      offset: "0,0"

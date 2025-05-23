@@ -5,6 +5,7 @@
   slots:
     head:
       part: HeadGingerbread
+      offset: "0,0"
       connections:
       - torso
       organs:
@@ -12,6 +13,7 @@
         eyes: OrganHumanEyes
     torso:
       part: TorsoGingerbread
+      offset: "0,0"
       connections:
       - right arm
       - left arm
@@ -25,25 +27,33 @@
         kidneys: OrganHumanKidneys
     right arm:
       part: RightArmGingerbread
+      offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmGingerbread
+      offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandGingerbread
+      offset: "0,0"
     left hand:
       part: LeftHandGingerbread
+      offset: "0,0"
     right leg:
       part: RightLegGingerbread
+      offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegGingerbread
+      offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootGingerbread
+      offset: "0,0"
     left foot:
       part: LeftFootGingerbread
+      offset: "0,0"
