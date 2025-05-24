@@ -13,15 +13,21 @@ public sealed class StandingStateSystem : EntitySystem
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
+    // Система, отвечающая за модификатор скорости передвижения
+    [Dependency] private readonly MovementSpeedModifierSystem _movement = default!;
 
     // If StandingCollisionLayer value is ever changed to more than one layer, the logic needs to be edited.
     private const int StandingCollisionLayer = (int) CollisionGroup.MidImpassable;
+    // Множитель скорости при лежачем состоянии
+    private const float StandingSpeedMultiplier = 0.2f;
 
     public override void Initialize()
     {
         base.Initialize();
         SubscribeLocalEvent<StandingStateComponent, AttemptMobCollideEvent>(OnMobCollide);
         SubscribeLocalEvent<StandingStateComponent, AttemptMobTargetCollideEvent>(OnMobTargetCollide);
+        // Обновление скорости при запросе
+        SubscribeLocalEvent<StandingStateComponent, RefreshMovementSpeedModifiersEvent>(OnRefreshMove);
     }
 
     private void OnMobTargetCollide(Entity<StandingStateComponent> ent, ref AttemptMobTargetCollideEvent args)
@@ -38,6 +44,13 @@ public sealed class StandingStateSystem : EntitySystem
         {
             args.Cancelled = true;
         }
+    }
+
+    private void OnRefreshMove(EntityUid uid, StandingStateComponent comp, ref RefreshMovementSpeedModifiersEvent args)
+    {
+        // Если персонаж лежит, уменьшаем его скорость
+        if (!comp.Standing)
+            args.ModifySpeed(StandingSpeedMultiplier);
     }
 
     public bool IsDown(EntityUid uid, StandingStateComponent? standingState = null)
@@ -88,6 +101,8 @@ public sealed class StandingStateSystem : EntitySystem
         standingState.Standing = false;
         Dirty(uid, standingState);
         RaiseLocalEvent(uid, new DownedEvent(), false);
+        // После падения пересчитываем скорость
+        _movement.RefreshMovementSpeedModifiers(uid);
 
         // Seemed like the best place to put it
         _appearance.SetData(uid, RotationVisuals.RotationState, RotationState.Horizontal, appearance);
@@ -145,6 +160,8 @@ public sealed class StandingStateSystem : EntitySystem
         standingState.Standing = true;
         Dirty(uid, standingState);
         RaiseLocalEvent(uid, new StoodEvent(), false);
+        // Возвращаем обычную скорость
+        _movement.RefreshMovementSpeedModifiers(uid);
 
         _appearance.SetData(uid, RotationVisuals.RotationState, RotationState.Vertical, appearance);
 

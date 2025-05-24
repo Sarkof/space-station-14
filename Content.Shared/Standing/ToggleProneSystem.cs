@@ -4,6 +4,9 @@ using Robust.Shared.Player;
 
 namespace Content.Shared.Standing;
 
+/// <summary>
+/// Система переключения положения стоя/лежа.
+/// </summary>
 public sealed class ToggleProneSystem : EntitySystem
 {
     [Dependency] private readonly StandingStateSystem _standing = default!;
