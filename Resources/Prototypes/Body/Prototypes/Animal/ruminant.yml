@@ -1,11 +1,11 @@
-﻿- type: body
+- type: body
   id: AnimalRuminant
   name: "ruminant"
   root: torso
   slots:
     torso:
       part: TorsoAnimal
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - legs
       organs:
@@ -17,9 +17,9 @@
         kidneys: OrganAnimalKidneys
     legs:
       part: LegsAnimal
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - feet
     feet:
       part: FeetAnimal
-  offset: "0,0"
+      offset: "0,0"

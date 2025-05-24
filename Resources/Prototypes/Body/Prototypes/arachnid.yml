@@ -1,11 +1,11 @@
-﻿- type: body
+- type: body
   id: Arachnid
   name: "arachnid"
   root: torso
   slots:
     head:
       part: HeadArachnid
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - torso
       organs:
@@ -13,7 +13,7 @@
         eyes: OrganArachnidEyes
     torso:
       part: TorsoArachnid
-  offset: "0,0"
+      offset: "0,0"
       organs:
         heart: OrganArachnidHeart
         lungs: OrganAnimalLungs
@@ -27,33 +27,33 @@
       - left leg
     right arm:
       part: RightArmArachnid
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmArachnid
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandArachnid
-  offset: "0,0"
+      offset: "0,0"
     left hand:
       part: LeftHandArachnid
-  offset: "0,0"
+      offset: "0,0"
     right leg:
       part: RightLegArachnid
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegArachnid
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootArachnid
-  offset: "0,0"
+      offset: "0,0"
     left foot:
       part: LeftFootArachnid
-  offset: "0,0"
+      offset: "0,0"

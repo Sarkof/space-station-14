@@ -1,11 +1,11 @@
-﻿- type: body
+- type: body
   id: Moth
   name: "moth"
   root: torso
   slots:
     head:
       part: HeadMoth
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - torso
       organs:
@@ -13,47 +13,47 @@
         eyes: OrganHumanEyes
     torso:
       part: TorsoMoth
-  offset: "0,0"
+      offset: "0,0"
+      connections:
+      - right arm
+      - left arm
+      - right leg
+      - left leg
       organs:
         heart: OrganAnimalHeart
         lungs: OrganHumanLungs
         stomach: OrganMothStomach
         liver: OrganAnimalLiver
         kidneys: OrganHumanKidneys
-      connections:
-      - right arm
-      - left arm
-      - right leg
-      - left leg
     right arm:
       part: RightArmMoth
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmMoth
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandMoth
-  offset: "0,0"
+      offset: "0,0"
     left hand:
       part: LeftHandMoth
-  offset: "0,0"
+      offset: "0,0"
     right leg:
       part: RightLegMoth
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegMoth
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootMoth
-  offset: "0,0"
+      offset: "0,0"
     left foot:
       part: LeftFootMoth
-  offset: "0,0"
+      offset: "0,0"
