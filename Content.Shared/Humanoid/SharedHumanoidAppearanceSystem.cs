@@ -42,7 +42,7 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
     [Dependency] private readonly GrammarSystem _grammarSystem = default!;
     [Dependency] private readonly SharedIdentitySystem _identity = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
-
+	
     [ValidatePrototypeId<SpeciesPrototype>]
     public const string DefaultSpecies = "Human";
 
@@ -116,6 +116,12 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
 
         args.PushText(Loc.GetString("humanoid-appearance-component-examine", ("user", identity), ("age", age), ("species", species)));
 
+        if (args.TargetPart != null)
+        {
+            var partName = Identity.Name(args.TargetPart.Value, EntityManager);
+            args.PushMarkup(Loc.GetString("examined-limb", ("part", partName)));
+        }
+		
         var examinerPos = _transform.GetWorldPosition(args.Examiner);
         var targetPos = _transform.GetWorldPosition(args.Examined);
         var distance = (targetPos - examinerPos).Length();

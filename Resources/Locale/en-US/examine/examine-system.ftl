@@ -11,3 +11,4 @@ examinable-anchored = It is [color=darkgreen]anchored[/color] to the floor.
 examinable-unanchored = It is [color=darkred]unanchored[/color] from the floor.
 
 examine-distance = Distance: {$distance}
+examined-limb = Limb: {$part}
