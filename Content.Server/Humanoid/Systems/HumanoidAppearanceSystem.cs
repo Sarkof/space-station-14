@@ -1,4 +1,5 @@
 using Content.Shared.Humanoid;
+using Content.Shared.Humanoid.Components;
 using Content.Shared.Humanoid.Markings;
 using Content.Shared.Humanoid.Prototypes;
 using Content.Shared.Preferences;
@@ -18,7 +19,23 @@ public sealed partial class HumanoidAppearanceSystem : SharedHumanoidAppearanceS
         SubscribeLocalEvent<HumanoidAppearanceComponent, HumanoidMarkingModifierMarkingSetMessage>(OnMarkingsSet);
         SubscribeLocalEvent<HumanoidAppearanceComponent, HumanoidMarkingModifierBaseLayersSetMessage>(OnBaseLayersSet);
         SubscribeLocalEvent<HumanoidAppearanceComponent, GetVerbsEvent<Verb>>(OnVerbsRequest);
+
+        // Автоматически добавляем компонент зон частей тела ко всем гуманоидам
+        // Не используем ComponentInit, так как он уже подписан в базовом классе
+        // Вместо этого переопределяем обработчик OnInit в этом классе
     }
+
+    // Переопределение обработчика инициализации из базового класса
+    private new void OnInit(EntityUid uid, HumanoidAppearanceComponent humanoid, ComponentInit args)
+    {
+        // Сначала вызываем базовый обработчик
+        base.OnInit(uid, humanoid, args);
+
+        // Затем добавляем свою логику
+        EnsureComp<HumanoidBodyPartZonesComponent>(uid);
+    }
+
+    // Этот метод больше не нужен, так как его функциональность перенесена в переопределенный OnInit
 
     /// <summary>
     ///     Removes a marking from a humanoid by ID.

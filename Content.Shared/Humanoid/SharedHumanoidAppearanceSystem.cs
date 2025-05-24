@@ -4,8 +4,10 @@ using System.Numerics;
 using Content.Shared.CCVar;
 using Content.Shared.Decals;
 using Content.Shared.Examine;
+using Content.Shared.Humanoid.Components;
 using Content.Shared.Humanoid.Markings;
 using Content.Shared.Humanoid.Prototypes;
+using Content.Shared.Humanoid.Systems;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Inventory;
 using Content.Shared.Preferences;
@@ -42,7 +44,7 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
     [Dependency] private readonly GrammarSystem _grammarSystem = default!;
     [Dependency] private readonly SharedIdentitySystem _identity = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
-	
+
     [ValidatePrototypeId<SpeciesPrototype>]
     public const string DefaultSpecies = "Human";
 
@@ -50,8 +52,10 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
     {
         base.Initialize();
 
+        // Внимание: не дублируйте эти подписки в наследуемых классах
         SubscribeLocalEvent<HumanoidAppearanceComponent, ComponentInit>(OnInit);
         SubscribeLocalEvent<HumanoidAppearanceComponent, ExaminedEvent>(OnExamined);
+        SubscribeLocalEvent<HumanoidAppearanceComponent, EntityExaminedEvent>(OnEntityExamined);
     }
 
     public DataNode ToDataNode(HumanoidCharacterProfile profile)
@@ -85,7 +89,7 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
         return profile;
     }
 
-    private void OnInit(EntityUid uid, HumanoidAppearanceComponent humanoid, ComponentInit args)
+    protected virtual void OnInit(EntityUid uid, HumanoidAppearanceComponent humanoid, ComponentInit args)
     {
         if (string.IsNullOrEmpty(humanoid.Species) || _netManager.IsClient && !IsClientSide(uid))
         {
@@ -108,19 +112,49 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
         LoadProfile(uid, startingSet.Profile, humanoid);
     }
 
+    [Dependency] private readonly HumanoidBodyPartSystem _bodyPartSystem = default!;
+
+    // Обработчик для старого события ExaminedEvent
     private void OnExamined(EntityUid uid, HumanoidAppearanceComponent component, ExaminedEvent args)
     {
         var identity = Identity.Entity(uid, EntityManager);
         var species = GetSpeciesRepresentation(component.Species).ToLower();
         var age = GetAgeRepresentation(component.Species, component.Age);
 
-        args.PushText(Loc.GetString("humanoid-appearance-component-examine", ("user", identity), ("age", age), ("species", species)));
-		
         var examinerPos = _transform.GetWorldPosition(args.Examiner);
         var targetPos = _transform.GetWorldPosition(args.Examined);
         var distance = (targetPos - examinerPos).Length();
 
         args.PushMarkup(Loc.GetString("examine-distance", ("distance", distance.ToString("F1"))));
+
+        args.PushText(Loc.GetString("humanoid-appearance-component-examine", ("user", identity), ("age", age), ("species", species)));
+    }
+
+    // Обработчик для нового события EntityExaminedEvent с поддержкой координат
+    private void OnEntityExamined(EntityUid uid, HumanoidAppearanceComponent component, EntityExaminedEvent args)
+    {
+        var identity = Identity.Entity(uid, EntityManager);
+        var species = GetSpeciesRepresentation(component.Species).ToLower();
+        var age = GetAgeRepresentation(component.Species, component.Age);
+
+        args.PushText(Loc.GetString("humanoid-appearance-component-examine", ("user", identity), ("age", age), ("species", species)));
+
+        var examinerPos = _transform.GetWorldPosition(args.Examiner);
+        var targetPos = _transform.GetWorldPosition(args.Examined);
+        var distance = (targetPos - examinerPos).Length();
+
+        args.PushMarkup(Loc.GetString("examine-distance", ("distance", distance.ToString("F1"))));
+
+        // Определяем часть тела, на которую направлен осмотр
+        if (TryComp<HumanoidBodyPartZonesComponent>(uid, out var zones))
+        {
+            var bodyPart = _bodyPartSystem.GetBodyPartAtPosition(uid, examinerPos, targetPos, args.ExamineLocation);
+            if (bodyPart.HasValue)
+            {
+                var partName = bodyPart.Value.ToString().ToLower();
+                args.PushMarkup(Loc.GetString($"examine-body-part-{partName}"));
+            }
+        }
     }
 
     /// <summary>
