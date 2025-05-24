@@ -1,11 +1,11 @@
-﻿- type: body
+- type: body
   id: Mothroach
   name: "mothroach"
   root: torso
   slots:
     torso:
       part: TorsoAnimal
-  offset: "0,0"
+      offset: "0,0"
       organs:
         lungs: OrganAnimalLungs
         stomach: OrganMothStomach

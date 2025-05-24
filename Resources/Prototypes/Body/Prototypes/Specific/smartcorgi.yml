@@ -5,7 +5,7 @@
   slots:
     torso:
       part: TorsoAnimal
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - righthand
       - lefthand
@@ -19,15 +19,15 @@
         kidneys: OrganAnimalKidneys
     lefthand:
       part: LeftHandSmartCorgi
-  offset: "0,0"
+      offset: "0,0"
     righthand:
       part: RightHandSmartCorgi
-  offset: "0,0"
+      offset: "0,0"
     legs:
       part: LegsAnimal
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - feet
     feet:
       part: FeetAnimal
-  offset: "0,0"
+      offset: "0,0"

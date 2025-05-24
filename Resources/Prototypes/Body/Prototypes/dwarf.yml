@@ -1,11 +1,11 @@
-﻿- type: body
+- type: body
   id: Dwarf
   name: "dwarf"
   root: torso
   slots:
     head:
       part: HeadHuman
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - torso
       organs:
@@ -13,7 +13,7 @@
         eyes: OrganHumanEyes
     torso:
       part: TorsoHuman
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - right arm
       - left arm
@@ -27,33 +27,33 @@
         kidneys: OrganHumanKidneys
     right arm:
       part: RightArmHuman
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - right hand
     left arm:
       part: LeftArmHuman
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - left hand
     right hand:
       part: RightHandHuman
-  offset: "0,0"
+      offset: "0,0"
     left hand:
       part: LeftHandHuman
-  offset: "0,0"
+      offset: "0,0"
     right leg:
       part: RightLegHuman
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - right foot
     left leg:
       part: LeftLegHuman
-  offset: "0,0"
+      offset: "0,0"
       connections:
       - left foot
     right foot:
       part: RightFootHuman
-  offset: "0,0"
+      offset: "0,0"
     left foot:
       part: LeftFootHuman
-  offset: "0,0"
+      offset: "0,0"
