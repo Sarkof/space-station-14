@@ -6,6 +6,7 @@ using Content.Shared.Rotation;
 using Content.Shared.Climbing.Components;
 using Content.Shared.Climbing.Systems;
 using Robust.Shared.Audio.Systems;
+using Content.Shared.Climbing.Events;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Systems;
 
@@ -34,6 +35,7 @@ public sealed class StandingStateSystem : EntitySystem
         SubscribeLocalEvent<StandingStateComponent, AttemptMobTargetCollideEvent>(OnMobTargetCollide);
         // Обновление скорости при запросе
         SubscribeLocalEvent<StandingStateComponent, RefreshMovementSpeedModifiersEvent>(OnRefreshMove);
+        SubscribeLocalEvent<StandingStateComponent, EndClimbEvent>(OnEndClimb);
     }
 
     private void OnMobTargetCollide(Entity<StandingStateComponent> ent, ref AttemptMobTargetCollideEvent args)
@@ -57,6 +59,27 @@ public sealed class StandingStateSystem : EntitySystem
         // Если персонаж лежит, уменьшаем его скорость
         if (!comp.Standing)
             args.ModifySpeed(StandingSpeedMultiplier);
+    }
+
+    // [BUG]
+    private void OnEndClimb(EntityUid uid, StandingStateComponent component, ref EndClimbEvent args)
+    {
+        // Log.Debug("End climb");
+        if (component.ChangedFixtures.Count == 0)
+            return;
+
+        if (!TryComp(uid, out FixturesComponent? fixtures))
+            return;
+
+        foreach (var key in component.ChangedFixtures)
+        {
+            if (!fixtures.Fixtures.TryGetValue(key, out var fixture))
+                continue;
+
+            _physics.SetCollisionMask(uid, key, fixture, fixture.CollisionMask | StandingCollisionLayer, fixtures);
+        }
+
+        component.ChangedFixtures.Clear();
     }
 
     public bool IsDown(EntityUid uid, StandingStateComponent? standingState = null)
@@ -173,8 +196,8 @@ public sealed class StandingStateSystem : EntitySystem
 
         var xform = Transform(uid);
         var worldPos = _transform.GetWorldPosition(xform);
-        var centerBounds = new Box2(worldPos - Vector2.One * 0.01f,
-            worldPos + Vector2.One * 0.01f);
+        var centerBounds = new Box2(worldPos - Vector2.One * 0.1f,
+            worldPos + Vector2.One * 0.1f);
         var isClimbed = false;
 
         // Проверяем пересечение себя с другими объектами
@@ -205,7 +228,7 @@ public sealed class StandingStateSystem : EntitySystem
             {
                 if (fixtureComponent.Fixtures.TryGetValue(key, out var fixture))
                 {
-                    Log.Debug("collision");
+                    // Log.Debug("collision");
                     _physics.SetCollisionMask(uid, key, fixture, fixture.CollisionMask | StandingCollisionLayer, fixtureComponent);
                 }
             }
