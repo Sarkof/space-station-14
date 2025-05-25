@@ -1,3 +1,4 @@
+using System.Numerics;
 using Content.Shared.Hands.Components;
 using Content.Shared.Movement.Systems;
 using Content.Shared.Physics;
@@ -7,7 +8,6 @@ using Content.Shared.Climbing.Systems;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Systems;
-using Robust.Shared.Map.Components;
 
 namespace Content.Shared.Standing;
 
@@ -113,20 +113,6 @@ public sealed class StandingStateSystem : EntitySystem
         // Seemed like the best place to put it
         _appearance.SetData(uid, RotationVisuals.RotationState, RotationState.Horizontal, appearance);
 
-        // Проверяем, не оказались ли мы после падения внутри объекта,
-        // на который можно забраться, и если да — начинаем залезать на него.
-        var downBounds = _lookup.GetWorldAABB(uid);
-        var downXform = EntityManager.GetComponent<TransformComponent>(uid);
-        foreach (var other in _lookup.GetEntitiesIntersecting(downXform.MapID, downBounds, LookupFlags.Static))
-        {
-            if (other != uid && HasComp<ClimbableComponent>(other))
-            {
-                if (!TryComp(uid, out ClimbingComponent? climbing) || !climbing.IsClimbing)
-                    _climb.ForciblySetClimbing(uid, other);
-                break;
-            }
-        }
-
         // Change collision masks to allow going under certain entities like flaps and tables
         if (TryComp(uid, out FixturesComponent? fixtureComponent))
         {
@@ -185,30 +171,47 @@ public sealed class StandingStateSystem : EntitySystem
 
         _appearance.SetData(uid, RotationVisuals.RotationState, RotationState.Vertical, appearance);
 
-        // Проверяем, не оказались ли мы после подъема внутри объекта,
-        // на который можно забраться, и если да — начинаем залезать на него.
-        var bounds = _lookup.GetWorldAABB(uid);
-        var transform = EntityManager.GetComponent<TransformComponent>(uid);
-        foreach (var other in _lookup.GetEntitiesIntersecting(transform.MapID, bounds, LookupFlags.Static))
+        var xform = Transform(uid);
+        var worldPos = _transform.GetWorldPosition(xform);
+        var centerBounds = new Box2(worldPos - Vector2.One * 0.01f,
+            worldPos + Vector2.One * 0.01f);
+        var isClimbed = false;
+
+        // Проверяем пересечение себя с другими объектами
+        foreach (var other in _lookup.GetEntitiesIntersecting(xform.MapID, centerBounds, LookupFlags.Static))
         {
-            if (other != uid && HasComp<ClimbableComponent>(other))
+            // Пропускаем себя или объект без компонента climbable
+            if (other == uid || !HasComp<ClimbableComponent>(other))
             {
-                if (!TryComp(uid, out ClimbingComponent? climbing) || !climbing.IsClimbing)
-                    _climb.ForciblySetClimbing(uid, other);
+                continue;
+            }
+
+            // Если центр существа пересекается с climbable-объектом — начинаем подъем
+            if (!TryComp(uid, out ClimbingComponent? climbing) || !climbing.IsClimbing)
+            {
+                _climb.ForciblySetClimbing(uid, other);
+                // _climb.Climb(uid, uid, other, false, climbing);
+                // _climb.TryClimb(uid, uid, other, out _);
+
+                isClimbed = true;
                 break;
             }
         }
 
-        if (TryComp(uid, out FixturesComponent? fixtureComponent))
+        // Если этапом ранее существо взобралось на объект - пропускаем блок
+        if (!isClimbed && TryComp(uid, out FixturesComponent? fixtureComponent))
         {
             foreach (var key in standingState.ChangedFixtures)
             {
                 if (fixtureComponent.Fixtures.TryGetValue(key, out var fixture))
+                {
+                    Log.Debug("collision");
                     _physics.SetCollisionMask(uid, key, fixture, fixture.CollisionMask | StandingCollisionLayer, fixtureComponent);
+                }
             }
-        }
 
-        standingState.ChangedFixtures.Clear();
+            standingState.ChangedFixtures.Clear();
+        }
 
         return true;
     }
