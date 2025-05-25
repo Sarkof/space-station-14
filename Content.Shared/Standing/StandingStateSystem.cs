@@ -2,9 +2,12 @@ using Content.Shared.Hands.Components;
 using Content.Shared.Movement.Systems;
 using Content.Shared.Physics;
 using Content.Shared.Rotation;
+using Content.Shared.Climbing.Components;
+using Content.Shared.Climbing.Systems;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Systems;
+using Robust.Shared.Map.Components;
 
 namespace Content.Shared.Standing;
 
@@ -15,6 +18,9 @@ public sealed class StandingStateSystem : EntitySystem
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     // Система, отвечающая за модификатор скорости передвижения
     [Dependency] private readonly MovementSpeedModifierSystem _movement = default!;
+    [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private readonly ClimbSystem _climb = default!;
 
     // If StandingCollisionLayer value is ever changed to more than one layer, the logic needs to be edited.
     private const int StandingCollisionLayer = (int) CollisionGroup.MidImpassable;
@@ -107,6 +113,20 @@ public sealed class StandingStateSystem : EntitySystem
         // Seemed like the best place to put it
         _appearance.SetData(uid, RotationVisuals.RotationState, RotationState.Horizontal, appearance);
 
+        // Проверяем, не оказались ли мы после падения внутри объекта,
+        // на который можно забраться, и если да — начинаем залезать на него.
+        var downBounds = _lookup.GetWorldAABB(uid);
+        var downXform = EntityManager.GetComponent<TransformComponent>(uid);
+        foreach (var other in _lookup.GetEntitiesIntersecting(downXform.MapID, downBounds, LookupFlags.Static))
+        {
+            if (other != uid && HasComp<ClimbableComponent>(other))
+            {
+                if (!TryComp(uid, out ClimbingComponent? climbing) || !climbing.IsClimbing)
+                    _climb.ForciblySetClimbing(uid, other);
+                break;
+            }
+        }
+
         // Change collision masks to allow going under certain entities like flaps and tables
         if (TryComp(uid, out FixturesComponent? fixtureComponent))
         {
@@ -165,6 +185,20 @@ public sealed class StandingStateSystem : EntitySystem
 
         _appearance.SetData(uid, RotationVisuals.RotationState, RotationState.Vertical, appearance);
 
+        // Проверяем, не оказались ли мы после подъема внутри объекта,
+        // на который можно забраться, и если да — начинаем залезать на него.
+        var bounds = _lookup.GetWorldAABB(uid);
+        var transform = EntityManager.GetComponent<TransformComponent>(uid);
+        foreach (var other in _lookup.GetEntitiesIntersecting(transform.MapID, bounds, LookupFlags.Static))
+        {
+            if (other != uid && HasComp<ClimbableComponent>(other))
+            {
+                if (!TryComp(uid, out ClimbingComponent? climbing) || !climbing.IsClimbing)
+                    _climb.ForciblySetClimbing(uid, other);
+                break;
+            }
+        }
+
         if (TryComp(uid, out FixturesComponent? fixtureComponent))
         {
             foreach (var key in standingState.ChangedFixtures)
@@ -173,6 +207,7 @@ public sealed class StandingStateSystem : EntitySystem
                     _physics.SetCollisionMask(uid, key, fixture, fixture.CollisionMask | StandingCollisionLayer, fixtureComponent);
             }
         }
+
         standingState.ChangedFixtures.Clear();
 
         return true;
