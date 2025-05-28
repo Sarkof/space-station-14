@@ -1,8 +1,12 @@
+using System.Numerics;
 using Content.Shared.Hands.Components;
 using Content.Shared.Movement.Systems;
 using Content.Shared.Physics;
 using Content.Shared.Rotation;
+using Content.Shared.Climbing.Components;
+using Content.Shared.Climbing.Systems;
 using Robust.Shared.Audio.Systems;
+using Content.Shared.Climbing.Events;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Systems;
 
@@ -13,15 +17,25 @@ public sealed class StandingStateSystem : EntitySystem
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
+    // Система, отвечающая за модификатор скорости передвижения
+    [Dependency] private readonly MovementSpeedModifierSystem _movement = default!;
+    [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private readonly ClimbSystem _climb = default!;
 
     // If StandingCollisionLayer value is ever changed to more than one layer, the logic needs to be edited.
     private const int StandingCollisionLayer = (int) CollisionGroup.MidImpassable;
+    // Множитель скорости при лежачем состоянии
+    private const float StandingSpeedMultiplier = 0.2f;
 
     public override void Initialize()
     {
         base.Initialize();
         SubscribeLocalEvent<StandingStateComponent, AttemptMobCollideEvent>(OnMobCollide);
         SubscribeLocalEvent<StandingStateComponent, AttemptMobTargetCollideEvent>(OnMobTargetCollide);
+        // Обновление скорости при запросе
+        SubscribeLocalEvent<StandingStateComponent, RefreshMovementSpeedModifiersEvent>(OnRefreshMove);
+        SubscribeLocalEvent<StandingStateComponent, EndClimbEvent>(OnEndClimb);
     }
 
     private void OnMobTargetCollide(Entity<StandingStateComponent> ent, ref AttemptMobTargetCollideEvent args)
@@ -38,6 +52,34 @@ public sealed class StandingStateSystem : EntitySystem
         {
             args.Cancelled = true;
         }
+    }
+
+    private void OnRefreshMove(EntityUid uid, StandingStateComponent comp, ref RefreshMovementSpeedModifiersEvent args)
+    {
+        // Если персонаж лежит, уменьшаем его скорость
+        if (!comp.Standing)
+            args.ModifySpeed(StandingSpeedMultiplier);
+    }
+
+    // [BUG]
+    private void OnEndClimb(EntityUid uid, StandingStateComponent component, ref EndClimbEvent args)
+    {
+        // Log.Debug("End climb");
+        if (component.ChangedFixtures.Count == 0)
+            return;
+
+        if (!TryComp(uid, out FixturesComponent? fixtures))
+            return;
+
+        foreach (var key in component.ChangedFixtures)
+        {
+            if (!fixtures.Fixtures.TryGetValue(key, out var fixture))
+                continue;
+
+            _physics.SetCollisionMask(uid, key, fixture, fixture.CollisionMask | StandingCollisionLayer, fixtures);
+        }
+
+        component.ChangedFixtures.Clear();
     }
 
     public bool IsDown(EntityUid uid, StandingStateComponent? standingState = null)
@@ -88,6 +130,8 @@ public sealed class StandingStateSystem : EntitySystem
         standingState.Standing = false;
         Dirty(uid, standingState);
         RaiseLocalEvent(uid, new DownedEvent(), false);
+        // После падения пересчитываем скорость
+        _movement.RefreshMovementSpeedModifiers(uid);
 
         // Seemed like the best place to put it
         _appearance.SetData(uid, RotationVisuals.RotationState, RotationState.Horizontal, appearance);
@@ -145,18 +189,52 @@ public sealed class StandingStateSystem : EntitySystem
         standingState.Standing = true;
         Dirty(uid, standingState);
         RaiseLocalEvent(uid, new StoodEvent(), false);
+        // Возвращаем обычную скорость
+        _movement.RefreshMovementSpeedModifiers(uid);
 
         _appearance.SetData(uid, RotationVisuals.RotationState, RotationState.Vertical, appearance);
 
-        if (TryComp(uid, out FixturesComponent? fixtureComponent))
+        var xform = Transform(uid);
+        var worldPos = _transform.GetWorldPosition(xform);
+        var centerBounds = new Box2(worldPos - Vector2.One * 0.1f,
+            worldPos + Vector2.One * 0.1f);
+        var isClimbed = false;
+
+        // Проверяем пересечение себя с другими объектами
+        foreach (var other in _lookup.GetEntitiesIntersecting(xform.MapID, centerBounds, LookupFlags.Static))
+        {
+            // Пропускаем себя или объект без компонента climbable
+            if (other == uid || !HasComp<ClimbableComponent>(other))
+            {
+                continue;
+            }
+
+            // Если центр существа пересекается с climbable-объектом — начинаем подъем
+            if (!TryComp(uid, out ClimbingComponent? climbing) || !climbing.IsClimbing)
+            {
+                _climb.ForciblySetClimbing(uid, other);
+                // _climb.Climb(uid, uid, other, false, climbing);
+                // _climb.TryClimb(uid, uid, other, out _);
+
+                isClimbed = true;
+                break;
+            }
+        }
+
+        // Если этапом ранее существо взобралось на объект - пропускаем блок
+        if (!isClimbed && TryComp(uid, out FixturesComponent? fixtureComponent))
         {
             foreach (var key in standingState.ChangedFixtures)
             {
                 if (fixtureComponent.Fixtures.TryGetValue(key, out var fixture))
+                {
+                    // Log.Debug("collision");
                     _physics.SetCollisionMask(uid, key, fixture, fixture.CollisionMask | StandingCollisionLayer, fixtureComponent);
+                }
             }
+
+            standingState.ChangedFixtures.Clear();
         }
-        standingState.ChangedFixtures.Clear();
 
         return true;
     }

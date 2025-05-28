@@ -262,6 +262,10 @@ binds:
   type: State
   key: V
   mod1: Shift
+- function: ToggleProne
+  type: State
+  key: N
+  mod1: Shift
 - function: ShowDebugConsole
   type: State
   key: Tilde
