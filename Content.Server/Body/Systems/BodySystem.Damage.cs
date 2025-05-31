@@ -2,6 +2,7 @@
 using Content.Shared.Body.Components;
 using Content.Shared.Body.Part;
 using Content.Shared.Damage;
+using Content.Shared.Damage.Prototypes;
 using Content.Shared.FixedPoint;
 using Robust.Shared.Random;
 
@@ -39,16 +40,22 @@ public sealed partial class BodySystem
             return;
 
         // Считаем нанесённый урон в целых единицах.
-        var totalDamage = 0;
-        foreach (var value in args.DamageDelta.DamageDict.Values)
-        {
-            if (value <= FixedPoint2.Zero)
-                continue;
-            totalDamage += (int) MathF.Ceiling(value.Float());
-        }
+        // var totalDamage = 0;
+        // foreach (var value in args.DamageDelta.DamageDict.Values)
+        // {
+        //     if (value <= FixedPoint2.Zero)
+        //         continue;
+        //     totalDamage += (int) MathF.Ceiling(value.Float());
+        // }
 
+        // Считаем нанесённый урон в целых единицах.
+        var totalDamage = (int) MathF.Ceiling(args.DamageDelta.GetTotal().Float());
         if (totalDamage <= 0)
             return;
+
+        // Проверяем, какой группой нанесён урон.
+        var bruteGroup = Prototypes.Index<DamageGroupPrototype>("Brute");
+        var isBrute = args.DamageDelta.TryGetDamageInGroup(bruteGroup, out var brute) && brute > FixedPoint2.Zero;
 
         // Выбираем часть тела. Шанс попадания по торсу (корню) - 50%,
         // остальные части распределяются равномерно между собой.
@@ -63,7 +70,10 @@ public sealed partial class BodySystem
         // }
         var target =  _random.Pick(parts);
 
-        totalDamage *= 5;
+        if (target.Component.PartType == BodyPartType.Torso)
+            totalDamage *= 2;
+        else
+            totalDamage *= 10;
 
         // Уменьшаем здоровье выбранной части тела и помечаем её для синхронизации.
         Log.Debug(
@@ -76,10 +86,13 @@ public sealed partial class BodySystem
         target.Component.Health = Math.Max(0, target.Component.Health - totalDamage);
         Dirty(target.Id, target.Component);
 
-        if (target.Component.Health <= 0)
+        if (isBrute && target.Component.Health <= 0)
         {
+            Log.Debug("Brute");
             if (target.Component.PartType != BodyPartType.Torso)
+            {
                 Containers.TryRemoveFromContainer(target.Id);
+            }
             else
             {
                 Log.Debug("Gib body");
