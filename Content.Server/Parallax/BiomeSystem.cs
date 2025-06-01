@@ -9,6 +9,7 @@ using Content.Server.Ghost.Roles.Components;
 using Content.Server.Shuttles.Events;
 using Content.Server.Shuttles.Systems;
 using Content.Shared.Atmos;
+using Robust.Shared.Map.Events;
 using Content.Shared.Decals;
 using Content.Shared.Ghost;
 using Content.Shared.Gravity;
@@ -94,7 +95,8 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         SubscribeLocalEvent<ShuttleFlattenEvent>(OnShuttleFlatten);
         Subs.CVar(_configManager, CVars.NetMaxUpdateRange, SetLoadRange, true);
         InitializeCommands();
-        SubscribeLocalEvent<PrototypesReloadedEventArgs>(ProtoReload);
+		SubscribeLocalEvent<BeforeSerializationEvent>(OnMapSave);
+		SubscribeLocalEvent<PrototypesReloadedEventArgs>(ProtoReload);
     }
 
     private void ProtoReload(PrototypesReloadedEventArgs obj)
@@ -785,13 +787,17 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
             {
                 var indices = new Vector2i(x + chunk.X, y + chunk.Y);
 
-                // Pass in null so we don't try to get the tileref.
+                // Не загружаем тайлы, которые были модифицированы (включая те, где были сущности)
                 if (modified.Contains(indices))
                     continue;
 
-                // If there's existing data then don't overwrite it.
+                // Если существуют данные, не перезаписываем их
                 if (_mapSystem.TryGetTileRef(gridUid, grid, indices, out var tileRef) && !tileRef.Tile.IsEmpty)
+                {
+                    // Отмечаем этот тайл как модифицированный, чтобы сохранить его текущее состояние
+                    modified.Add(indices);
                     continue;
+                }
 
                 if (!TryGetBiomeTile(indices, component.Layers, seed, (gridUid, grid), out var biomeTile))
                     continue;
@@ -813,20 +819,28 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
             {
                 var indices = new Vector2i(x + chunk.X, y + chunk.Y);
 
+                // Не трогаем модифицированные тайлы
                 if (modified.Contains(indices))
                     continue;
 
-                // Don't mess with anything that's potentially anchored.
+                // Проверяем, есть ли уже что-то на этом тайле
                 var anchored = _mapSystem.GetAnchoredEntitiesEnumerator(gridUid, grid, indices);
 
-                if (anchored.MoveNext(out _) || !TryGetEntity(indices, component, (gridUid, grid), out var entPrototype))
+                if (anchored.MoveNext(out var existingEntity))
+                {
+                    // Если есть сущность, помечаем тайл как модифицированный
+                    modified.Add(indices);
+                    continue;
+                }
+
+                // Пытаемся получить тип сущности для этого тайла
+                if (!TryGetEntity(indices, component, (gridUid, grid), out var entPrototype))
                     continue;
 
-                // TODO: Fix non-anchored ents spawning.
-                // Just track loaded chunks for now.
+                // Создаем сущность
                 var ent = Spawn(entPrototype, _mapSystem.GridTileToLocal(gridUid, grid, indices));
 
-                // At least for now unless we do lookups or smth, only work with anchoring.
+                // Закрепляем сущность на тайле
                 if (_xformQuery.TryGetComponent(ent, out var xform) && !xform.Anchored)
                 {
                     _transform.AnchorEntity((ent, xform), (gridUid, grid), indices);
@@ -1082,5 +1096,69 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         }
 
         _mapSystem.SetTiles(mapUid, mapGrid, tiles);
+    }
+
+    private void OnMapSave(BeforeSerializationEvent ev)
+    {
+        var query = AllEntityQuery<BiomeComponent, TransformComponent>();
+        while (query.MoveNext(out var uid, out var biome, out var xform))
+        {
+            if (!ev.MapIds.Contains(xform.MapID))
+                continue;
+
+            // Сохраняем все текущие сущности как модифицированные тайлы
+            if (TryComp<MapGridComponent>(uid, out var grid))
+            {
+                // Для каждого загруженного чанка
+                foreach (var chunk in biome.LoadedChunks.ToList())
+                {
+                    // Проверяем все тайлы в чанке
+                    for (var x = 0; x < ChunkSize; x++)
+                    {
+                        for (var y = 0; y < ChunkSize; y++)
+                        {
+                            var indices = new Vector2i(x + chunk.X, y + chunk.Y);
+
+                            // Проверяем, есть ли на тайле какие-либо сущности
+                            var anchored = _mapSystem.GetAnchoredEntitiesEnumerator(uid, grid, indices);
+
+                            if (anchored.MoveNext(out _))
+                            {
+                                // Если есть сущности, отмечаем тайл как модифицированный
+                                var modChunk = SharedMapSystem.GetChunkIndices(indices, ChunkSize) * ChunkSize;
+                                var modified = biome.ModifiedTiles.GetOrNew(modChunk);
+                                modified.Add(indices);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Пометим все загруженные сущности как существующие на модифицированных тайлах
+            foreach (var (chunk, entityDict) in biome.LoadedEntities)
+            {
+                foreach (var (entityUid, indices) in entityDict)
+                {
+                    if (Exists(entityUid))
+                    {
+                        var modChunk = SharedMapSystem.GetChunkIndices(indices, ChunkSize) * ChunkSize;
+                        var modified = biome.ModifiedTiles.GetOrNew(modChunk);
+                        modified.Add(indices);
+                    }
+                }
+            }
+
+            // Очистка временных данных загрузки
+            biome.LoadedDecals.Clear();
+            biome.LoadedEntities.Clear();
+            biome.LoadedChunks.Clear();
+            biome.PendingMarkers.Clear();
+            biome.LoadedMarkers.Clear();
+            biome.MarkerLayers.Clear();
+            biome.ForcedMarkerLayers.Clear();
+
+            // Теперь мы не очищаем ModifiedTiles, так как в нем сохранена информация
+            // о всех тайлах, которые были модифицированы пользователем
+        }
     }
 }

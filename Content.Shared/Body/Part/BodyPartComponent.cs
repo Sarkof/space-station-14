@@ -32,6 +32,18 @@ public sealed partial class BodyPartComponent : Component
     public BodyPartSymmetry Symmetry = BodyPartSymmetry.None;
 
     /// <summary>
+    /// Максимальное количество здоровья у этой части тела.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadWrite), DataField("maxHealth"), AutoNetworkedField]
+    public int MaxHealth = 100;
+
+    /// <summary>
+    /// Текущее количество здоровья у этой части тела.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadWrite), DataField("health"), AutoNetworkedField]
+    public int Health = 100;
+
+    /// <summary>
     /// Child body parts attached to this body part.
     /// </summary>
     [DataField, AutoNetworkedField]
