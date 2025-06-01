@@ -14,6 +14,7 @@ using Robust.Shared.Timing;
 using Robust.Shared.Random;
 using System.Numerics;
 using Content.Shared.Damage.Components;
+using Robust.Shared.Physics.Systems;
 
 namespace Content.Server.Body.Systems;
 
@@ -25,6 +26,7 @@ public sealed partial class BodySystem : SharedBodySystem
     [Dependency] private readonly MobStateSystem _mobState = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly SharedMindSystem _mindSystem = default!;
+    [Dependency] private readonly SharedPhysicsSystem _physics = default!;
 
     public override void Initialize()
     {
